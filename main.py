@@ -8,134 +8,11 @@ import queue
 
 from leaderboard import Leaderboard
 from endstate import Endstate
+from board import Board
 
 EMPTY = 0
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-
-
-class Board:
-    board = numpy.empty((4, 4), int)
-
-    def random_board(self):
-        numbers = list(range(16))
-        random.shuffle(numbers)
-        index = 0
-        for i in range(0, 4):
-            for j in range(0, 4):
-                self.board[i, j] = numbers[index]
-                index += 1
-
-    def make_move(self, x, y):
-        if x - 1 > -1 and self.board[x - 1, y] == EMPTY:
-            self.board[x - 1, y] = self.board[x, y]
-        elif x + 1 < 4 and self.board[x + 1, y] == EMPTY:
-            self.board[x + 1, y] = self.board[x, y]
-        elif y - 1 > -1 and self.board[x, y - 1] == EMPTY:
-            self.board[x, y - 1] = self.board[x, y]
-        elif y + 1 < 4 and self.board[x, y + 1] == EMPTY:
-            self.board[x, y + 1] = self.board[x, y]
-        else:
-            return 0
-        self.board[x, y] = EMPTY
-        return 1
-
-    def find_empty(self):
-        for i in range(0, 4):
-            for j in range(0, 4):
-                if self.board[i, j] == EMPTY:
-                    return i, j
-
-    def is_complete(self):
-        for i in range(1, 16):
-            if self.board[math.floor((i - 1) / 4), (i - 1) % 4] != i:
-                return False
-        return True
-
-    def to_list(self):
-        lst = []
-        for x in range(0, 4):
-            for y in range(0, 4):
-                lst.append(self.board[x, y])
-        return lst
-
-    def is_solvable(self):
-        boardlist = self.to_list()
-        inversions = 0
-        row = 0
-        blank_row = 0
-        for i in range(0, 16):
-            if i % 4 == 0:
-                row += 1
-            if boardlist[i] == 0:
-                blank_row = row
-            for j in range(i + 1, 16):
-                if boardlist[i] > boardlist[j] > 0:
-                    inversions += 1
-        # if its on an odd row
-        if blank_row % 2 == 0:
-            # even number of inversions means its solvable, odd unsolvable
-            return inversions % 2 == 0
-        # even row
-        else:
-            # odd number of inversions means its solvable, even unsolvable
-            return inversions % 2 != 0
-
-    def find_possible_moves(self):
-        moves = []
-        x, y = self.find_empty()
-        if x - 1 >= 0:
-            board = Board()
-            b = copy_board(self.board)
-            b[x, y] = b[x - 1, y]
-            b[x - 1, y] = EMPTY
-            board.board = b
-            moves.append(board)
-        if x + 1 < 4:
-            board = Board()
-            b = copy_board(self.board)
-            b[x, y] = b[x + 1, y]
-            b[x + 1, y] = EMPTY
-            board.board = b
-            moves.append(board)
-        if y - 1 >= 0:
-            board = Board()
-            b = copy_board(self.board)
-            b[x, y] = b[x, y - 1]
-            b[x, y - 1] = EMPTY
-            board.board = b
-            moves.append(board)
-        if y + 1 < 4:
-            board = Board()
-            b = copy_board(self.board)
-            b[x, y] = b[x, y + 1]
-            b[x, y + 1] = EMPTY
-            board.board = b
-            moves.append(board)
-        return moves
-
-
-def copy_board(board):
-    dupe = numpy.zeros((4, 4))
-    for i in range(0, 4):
-        for j in range(0, 4):
-            dupe[i, j] = board[i, j]
-    return dupe
-
-
-def draw_board(board, screen):
-    screen.fill(WHITE)
-    for i in range(0, 5):
-        # vertical lines
-        pygame.draw.line(screen, BLACK, ((i * 150) + 100, 0), ((i * 150) + 100, 600), 2)
-        # horizontal lines
-        pygame.draw.line(screen, BLACK, (100, i * 150), (700, i * 150), 2)
-    for x in range(0, 4):
-        for y in range(0, 4):
-            font = pygame.font.SysFont("monospace", 60)
-            if board[y, x] != 0:
-                num = font.render(str(board[y, x]), True, BLACK)
-                screen.blit(num, ((x * 150) + 150, (y * 150) + 50))
 
 
 def hash_board(board):
@@ -195,7 +72,6 @@ def save(timer, move_count):
                     f.writelines(contents)
                     f.close()
                     return
-
     else:
         f = open("15puzzlescores.txt", "x")
         f.close()
@@ -203,6 +79,7 @@ def save(timer, move_count):
 
 
 def main():
+    screen = pygame.display.set_mode((700, 600))
     board = Board()
     board.random_board()
     while not board.is_solvable():
@@ -210,14 +87,13 @@ def main():
         board.random_board()
     pygame.init()
     pygame.display.set_caption("15 Puzzle")
-    screen = pygame.display.set_mode((700, 600))
     cells = []
     for x in range(0, 4):
         for y in range(0, 4):
             cell = pygame.Rect(y * 150 + 100, x * 150, 150, 150)
             cells.append(cell)
     screen.fill(WHITE)
-    draw_board(board.board, screen)
+    board.draw_board(screen)
     pygame.display.update()
     start = 0.00
     curr_time = 0.00
@@ -252,7 +128,7 @@ def main():
                                         save(curr_time, move_count)
                                         state = "end"
                                     else:
-                                        draw_board(board.board, screen)
+                                        board.draw_board(screen)
                                         pygame.display.update()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE:
