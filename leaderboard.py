@@ -12,16 +12,26 @@ BLACK = (0, 0, 0)
 
 class Leaderboard(object):
 
-    def __init__(self):
+    def __init__(self, screen):
+        self.active_state = True
+        self.back = None
         self.best_times = self.get_best_times("15puzzlescores.txt")
+        self.leaderboard_screen(screen)
 
     def get_best_times(self, filename):
-        times = []
+        times = [0.00, 0.00, 0.00]
         with open(filename) as f:
             for i in range(0, 3):
                 # adds the time from the file
-                times.append(f.readline().split()[1])
+                timer = f.readline()
+                if not timer:
+                    break
+                else:
+                    times[i] = (timer.split()[1])
         f.close()
+        for l in range(0, 3):
+            if times[l] is None:
+                times[l] = 0.00
         return times
 
     def leaderboard_screen(self, screen):
@@ -47,7 +57,8 @@ class Leaderboard(object):
             time_text = font.render(str(self.best_times[l]), True, BLACK)
             screen.blit(time_text, (290, 175 + l * 100))
 
-        #back button
+        # back button
+        self.back = pygame.Rect(250, 500, 200, 50)
         arrow = pygame.image.load('backarrow.png')
         arrow = pygame.transform.scale(arrow, (200, 50))
         screen.blit(arrow, (250, 500))

@@ -7,6 +7,7 @@ import pygame
 import queue
 
 from leaderboard import Leaderboard
+from endstate import Endstate
 
 EMPTY = 0
 WHITE = (255, 255, 255)
@@ -137,30 +138,6 @@ def draw_board(board, screen):
                 screen.blit(num, ((x * 150) + 150, (y * 150) + 50))
 
 
-def end_state(screen, num_moves, curr):
-    screen.fill(WHITE)
-    time_f = pygame.font.SysFont("monospace", 60)
-    time_t = time_f.render(str(curr) + " seconds", True, BLACK)
-    screen.blit(time_t, (120, 100))
-    complete = pygame.font.SysFont("monospace", 39)
-    text = complete.render("Puzzle completed in " + str(num_moves) + " moves", True, BLACK)
-    screen.blit(text, (20, 300))
-    restart_t = pygame.font.SysFont("monospace", 20)
-    restart_text = restart_t.render("Restart", True, BLACK)
-    screen.blit(restart_text, (303, 412))
-    restart = pygame.Rect(285, 400, 120, 50)
-    pygame.draw.rect(screen, BLACK, restart, 2)
-    pygame.display.update()
-    while 1:
-        for event in pygame.event.get():
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if restart.collidepoint(event.pos):
-                    main()
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
-
-
 def hash_board(board):
     return board.data.tobytes()
 
@@ -242,39 +219,67 @@ def main():
     screen.fill(WHITE)
     draw_board(board.board, screen)
     pygame.display.update()
-    start = time.time()
+    start = 0.00
+    curr_time = 0.00
     move_count = 0
+    state = "game"
     while 1:
-        curr = time.time() - start
-        curr = round(curr, 2)
-        cover = pygame.Rect(8, 8, 80, 20)
-        pygame.draw.rect(screen, WHITE, cover)
-        font = pygame.font.SysFont("monospace", 20)
-        timer = font.render(str(curr), True, BLACK)
-        screen.blit(timer, (20, 10))
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if not board.is_complete():
-                    if event.button == 1:
-                        for i in range(0, 16):
-                            if cells[i].collidepoint(event.pos):
-                                move_count += board.make_move(math.floor(i / 4), i % 4)
-                                if board.is_complete():
-                                    save(curr, move_count)
-                                    end_state(screen, move_count, curr)
-                                else:
-                                    draw_board(board.board, screen)
-                                    pygame.display.update()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
-                    leader = Leaderboard()
-                    leader.leaderboard_screen(screen)
-                elif event.key == pygame.K_ESCAPE:
-                    end_state(screen, move_count, curr)
+        if state == "game":
+            if start != 0:
+                curr_time = time.time() - start
+            curr_time = round(curr_time, 2)
+            font = pygame.font.SysFont("monospace", 20)
+            cover = pygame.Rect(10, 10, 80, 40)
+            pygame.draw.rect(screen, WHITE, cover)
+            time_text = font.render("Timer:", True, BLACK)
+            screen.blit(time_text, (20, 10))
+            timer = font.render(str(curr_time), True, BLACK)
+            screen.blit(timer, (20, 30))
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if start == 0:
+                        start = time.time()
+                    if not board.is_complete():
+                        if event.button == 1:
+                            for i in range(0, 16):
+                                if cells[i].collidepoint(event.pos):
+                                    move_count += board.make_move(math.floor(i / 4), i % 4)
+                                    if board.is_complete():
+                                        save(curr_time, move_count)
+                                        state = "end"
+                                    else:
+                                        draw_board(board.board, screen)
+                                        pygame.display.update()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        leader = Leaderboard(screen)
+                        leader.leaderboard_screen(screen)
+                    elif event.key == pygame.K_ESCAPE:
+                        state = "end"
+        if state == "end":
+            end = Endstate(screen, move_count, curr_time)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if end.restart.collidepoint(event.pos):
+                        main()
+                    if end.leaderboard.collidepoint(event.pos):
+                        state = "leader"
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+        if state == "leader":
+            leader = Leaderboard(screen)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if leader.back.collidepoint(event.pos):
+                        state = "end"
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
 
 
 main()

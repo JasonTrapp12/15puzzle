@@ -1,7 +1,0 @@
-Time: 29.6 Moves: 84
-Time: 31.56 Moves: 97
-Time: 37.15 Moves: 126
-Time: 38.86 Moves: 121
-Time: 39.5 Moves: 116
-Time: 42.87 Moves: 111
-Time: 44.17 Moves: 115
