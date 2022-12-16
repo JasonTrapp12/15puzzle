@@ -1,9 +1,7 @@
 import math
 import random
-import time
 import numpy
 import pygame
-import queue
 
 EMPTY = 0
 WHITE = (255, 255, 255)

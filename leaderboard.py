@@ -1,10 +1,4 @@
-import math
-import os.path
-import random
-import time
-import numpy
 import pygame
-import queue
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)

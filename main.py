@@ -1,8 +1,6 @@
 import math
 import os.path
-import random
 import time
-import numpy
 import pygame
 import queue
 
